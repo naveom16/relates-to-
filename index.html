@@ -113,6 +113,16 @@
       border-left-color: var(--danger);
     }
 
+    .stat-card.disposed {
+      background: #f5f3ff;
+      border-left-color: #7c3aed;
+    }
+
+    .stat-card.no-status {
+      background: #f9fafb;
+      border-left-color: var(--muted);
+    }
+
     .stat-label {
       font-size: 14px;
       color: var(--muted);
@@ -134,6 +144,14 @@
 
     .stat-card.inactive .stat-value {
       color: var(--danger);
+    }
+
+    .stat-card.disposed .stat-value {
+      color: #7c3aed;
+    }
+
+    .stat-card.no-status .stat-value {
+      color: var(--muted);
     }
 
     .table-wrap {
@@ -207,6 +225,16 @@
     .status.inactive {
       background: #fee2e2;
       color: var(--danger);
+    }
+
+    .status.disposed {
+      background: #ede9fe;
+      color: #7c3aed;
+    }
+
+    .status.no-data {
+      background: #f3f4f6;
+      color: var(--muted);
     }
 
     .status.unknown {
@@ -542,6 +570,14 @@
         <div class="stat-label">เสีย/ชำรุด</div>
         <div class="stat-value" id="inactiveCount">0</div>
       </div>
+      <div class="stat-card disposed">
+        <div class="stat-label">แทงจำหน่าย</div>
+        <div class="stat-value" id="disposedCount">0</div>
+      </div>
+      <div class="stat-card no-status">
+        <div class="stat-label">ไม่มีข้อมูลสถานะการใช้งาน</div>
+        <div class="stat-value" id="noStatusCount">0</div>
+      </div>
     </div>
 
     <div class="search-panel">
@@ -605,17 +641,28 @@
   </div>
 
   <script>
-    const STEIN_STORAGE_ROOMS = [
-      { url: 'https://api.steinhq.com/v1/storages/6a5f122c92b1163e971f7b26/ครุภัณฑ์', room: 'โรงยิม' },
-      { url: 'https://api.steinhq.com/v1/storages/6a601f8c92b1163e97202700/ครุภัณฑ์', room: 'ห้องประชุมสระบัว' },
-      { url: 'https://api.steinhq.com/v1/storages/6a601fd392b1163e9720270d/ครุภัณฑ์', room: 'ห้องประชุมลําตะคอง' },
-      { url: 'https://api.steinhq.com/v1/storages/6a60203892b1163e97202728/ครุภัณฑ์', room: 'ห้องประชุมใหญ่' },
-      { url: 'https://api.steinhq.com/v1/storages/6a6020d692b1163e9720275b/ครุภัณฑ์', room: 'ห้องประชุมดร.เศาวนิต' },
-      { url: 'https://api.steinhq.com/v1/storages/6a60219d92b1163e972027ac/ครุภัณฑ์', room: 'ห้องประชุม 70 ปี' },
-      { url: 'https://api.steinhq.com/v1/storages/6a60221892b1163e972027df/ครุภัณฑ์', room: 'ห้องประชุมสุวัจน์ 1' },
+    // ตั้งค่าการเชื่อมต่อ Google Sheets API v4
+    // หมายเหตุด้านความปลอดภัย: API Key นี้ฝังอยู่ฝั่ง client (มองเห็นได้จาก view-source ของหน้านี้)
+    // ควรตั้งค่าใน Google Cloud Console ให้จำกัดสิทธิ์ไว้เฉพาะ Google Sheets API และจำกัด HTTP referrer
+    // ให้เหลือเฉพาะโดเมนที่ใช้งานจริง เพื่อป้องกันไม่ให้ผู้อื่นเอา Key ไปใช้เกินขอบเขตที่ตั้งใจ
+    const GOOGLE_SHEETS_API_KEY = 'AIzaSyBk2zW8RhQxH9WBpTEqpxMnHJSwT5YFQ6k';
+    const SHEET_TAB_NAME = 'ครุภัณฑ์';
+
+    // อาร์เรย์ห้อง/สถานที่ พร้อม sheetId ของแต่ละห้อง (แทนที่ URL ของ SteinHQ เดิม)
+    const ASSET_ROOMS = [
+      { sheetId: '12wC2hFIgyFiVpfyWwNamg7D9hyX3QV8dTALeycxcwQw', room: 'โรงยิม' },
+      { sheetId: '1V4Cqf5XDm9D1Eb10D4Zp0FUVliRBEbpNzRjI9i49qgI', room: 'ห้องประชุมสระบัว' },
+      { sheetId: '1weQAX6jaUBv2Zo3TI3uW1O3e7SVLYGsQLCrUbD02r7Q', room: 'ห้องประชุมลําตะคอง' },
+      { sheetId: '1sW5QnlYNz-Nn6iabWgHx9oRThEUcmrvmqdE_c8uVuI0', room: 'ห้องประชุมใหญ่' },
+      { sheetId: '1E_ovo8MgTE7iE9uP2rATLUDG5vy3_DJTx4atH3RpyMg', room: 'ห้องประชุมดร.เศาวนิต' },
+      { sheetId: '1rl9WJDSI-Y-e9hx8MkC_yIDbxM0MAVtDoOqTo4g7w0U', room: 'ห้องประชุม 70 ปี' },
+      { sheetId: '1S00t1ynU2h6ZFNXB2svw4Lc0TMOedxbOqlbXnbJcvmc', room: 'ห้องประชุมสุวัจน์ 1' },
     ];
-    const STEIN_API_URLS = STEIN_STORAGE_ROOMS.map((s) => s.url);
-    const STEIN_API_URL = STEIN_API_URLS[0];
+
+    function buildSheetApiUrl(sheetId) {
+      return `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(SHEET_TAB_NAME)}?key=${GOOGLE_SHEETS_API_KEY}`;
+    }
+
     const REFRESH_INTERVAL_MS = 600000;
      const filterDefinitions = [
        {
@@ -671,8 +718,8 @@
 
      ];
     // คอลัมน์ที่แสดงในตารางผลลัพธ์ (แบบย่อ ให้พอดีจอ) — ข้อมูลครบทุกฟิลด์ยังดูได้เต็มเมื่อกดดูรายละเอียด
+    // หมายเหตุ: ไม่แสดง Asset ID ในตารางผลลัพธ์ (ใช้เลขลำดับแทน) แต่ยังดูได้เต็มเมื่อกดดูรายละเอียด
     const tableColumns = [
-      'Asset ID',
       'รายการครุภัณฑ์',
       'ประเภทครุภัณฑ์',
       'สถานะการใช้งาน',
@@ -683,24 +730,28 @@
     ];
 
     const columnWidths = {
-      'Asset ID': '110px',
-      'รายการครุภัณฑ์': '22%',
-      'ประเภทครุภัณฑ์': '15%',
+      'รายการครุภัณฑ์': '26%',
+      'ประเภทครุภัณฑ์': '16%',
       'สถานะการใช้งาน': '135px',
-      'สถานที่ติดตั้งจัดเก็บ': '16%',
-      'ห้อง': '13%',
+      'สถานที่ติดตั้งจัดเก็บ': '17%',
+      'ห้อง': '14%',
       'ปีที่จัดซื้อ': '85px',
       'ราคา': '95px'
     };
+
+    const INDEX_COLUMN_WIDTH = '56px';
 
     const hiddenColumns = ['รูปภาพครุภัณฑ์', 'IMAGEURL'];
 
     const loadingEl = document.getElementById('loading');
     const tableWrapEl = document.getElementById('tableWrap');
+    const apiErrorEl = document.getElementById('apiError');
     const tbodyEl = document.getElementById('assetTableBody');
     const totalCountEl = document.getElementById('totalCount');
     const activeCountEl = document.getElementById('activeCount');
     const inactiveCountEl = document.getElementById('inactiveCount');
+    const disposedCountEl = document.getElementById('disposedCount');
+    const noStatusCountEl = document.getElementById('noStatusCount');
     const tableHeaderEl = document.querySelector('#assetTable thead tr');
     const searchInputEl = document.getElementById('searchInput');
     const filterControlsEl = document.getElementById('filterControls');
@@ -744,17 +795,27 @@
         .replace(/'/g, '&#39;');
     }
 
-    function normalizeAssets(payload) {
-      if (Array.isArray(payload)) return payload.filter(Boolean);
-      if (payload && typeof payload === 'object') {
-        if (Array.isArray(payload.data)) return payload.data.filter(Boolean);
-        if (Array.isArray(payload.rows)) return payload.rows.filter(Boolean);
-        if (Array.isArray(payload.items)) return payload.items.filter(Boolean);
-        if (Array.isArray(payload.result)) return payload.result.filter(Boolean);
-        if (Array.isArray(payload.values)) return payload.values.filter(Boolean);
-        if (Array.isArray(payload.records)) return payload.records.filter(Boolean);
-      }
-      return [];
+    // แปลงข้อมูลจาก Google Sheets API v4 (2D Array: แถวแรกเป็น Header) ให้เป็น Array of Objects
+    // เพื่อให้เข้ากันได้กับส่วนแสดงผลเดิมที่คาดหวังรูปแบบ Key-Value เหมือนที่ SteinHQ เคยส่งมา
+    function parseSheetValuesToObjects(values) {
+      if (!Array.isArray(values) || values.length === 0) return [];
+
+      const headerRow = values[0] || [];
+      const headers = headerRow.map((h) => String(h ?? '').trim());
+      const dataRows = values.slice(1);
+
+      return dataRows
+        .filter((row) => Array.isArray(row) && row.some((cell) => String(cell ?? '').trim() !== ''))
+        .map((row) => {
+          const obj = {};
+          headers.forEach((header, index) => {
+            if (!header) return; // ข้ามคอลัมน์ที่ไม่มีชื่อ header
+            const cell = row[index];
+            const text = cell === undefined || cell === null ? '' : String(cell).trim();
+            obj[header] = text === '' ? '-' : text;
+          });
+          return obj;
+        });
     }
 
     function getColumns(items) {
@@ -764,8 +825,10 @@
 
     function getStatusClass(status) {
       const text = String(status || '').trim();
+      if (isEmptyValue(text)) return 'no-data';
       if (/ปกติ|ใช้งาน|พร้อม|ดี|active|good/i.test(text)) return 'active';
-      if (/ชำรุด|เสีย|ไม่|ยกเลิก|inactive|broken|down/i.test(text)) return 'inactive';
+      if (/จำหน่าย/i.test(text)) return 'disposed';
+      if (/ชำรุด|เสีย|ยกเลิก|inactive|broken|down/i.test(text)) return 'inactive';
       return 'unknown';
     }
 
@@ -815,7 +878,8 @@
       }
 
       if (isStatusColumn(key)) {
-        return `<span class="status ${getStatusClass(value)}">${escapeHtml(value)}</span>`;
+        const statusText = isEmptyValue(value) ? 'ไม่มีข้อมูล' : String(value);
+        return `<span class="status ${getStatusClass(value)}">${escapeHtml(statusText)}</span>`;
       }
 
       if (isPriceColumn(key)) {
@@ -930,15 +994,21 @@
 
     function renderSummary(items) {
       const total = items.length;
-      const active = items.filter((item) => {
-        const s = String(getValue(item, 'สถานะการใช้งาน')).trim();
-        return /ปกติ|ใช้งาน|พร้อม|ดี|active|good/i.test(s);
+      const statusOf = (item) => String(getValue(item, 'สถานะการใช้งาน')).trim();
+
+      const active = items.filter((item) => /ปกติ|ใช้งาน|พร้อม|ดี|active|good/i.test(statusOf(item))).length;
+      const inactive = items.filter((item) => {
+        const s = statusOf(item);
+        return !isEmptyValue(s) && /ชำรุด|เสีย|ยกเลิก|inactive|broken|down/i.test(s);
       }).length;
-      const inactive = total - active;
+      const disposed = items.filter((item) => /จำหน่าย/i.test(statusOf(item))).length;
+      const noStatus = items.filter((item) => isEmptyValue(statusOf(item))).length;
 
       totalCountEl.textContent = total;
       activeCountEl.textContent = active;
       inactiveCountEl.textContent = inactive;
+      disposedCountEl.textContent = disposed;
+      noStatusCountEl.textContent = noStatus;
     }
 
     function destroyChart(instance) {
@@ -1151,16 +1221,19 @@
       try {
         tbodyEl.innerHTML = '';
         const columns = getColumns(items);
-        tableHeaderEl.innerHTML = columns.map((key) => `<th style="width:${columnWidths[key] || 'auto'}">${escapeHtml(key)}</th>`).join('');
+        const totalCols = columns.length + 1;
+        tableHeaderEl.innerHTML = `<th style="width:${INDEX_COLUMN_WIDTH}">ลำดับ</th>` +
+          columns.map((key) => `<th style="width:${columnWidths[key] || 'auto'}">${escapeHtml(key)}</th>`).join('');
         if (!items.length) {
-          tbodyEl.innerHTML = `<tr><td colspan="${columns.length || tableColumns.length}" style="text-align:center;padding:24px;color:#6b7280;white-space:normal;">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>`;
+          tbodyEl.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center;padding:24px;color:#6b7280;white-space:normal;">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>`;
           return;
         }
 
-        const rows = items.map((item) => {
+        const rows = items.map((item, index) => {
+          const indexCell = `<td>${index + 1}</td>`;
           const cells = columns.map((key) => `<td title="${escapeHtml(String(getValue(item, key)))}">${createCellContent(item, key)}</td>`).join('');
           const itemJson = JSON.stringify(item).replace(/'/g, '&apos;');
-          return `<tr class="row-clickable" data-item='${itemJson}'>${cells}</tr>`;
+          return `<tr class="row-clickable" data-item='${itemJson}'>${indexCell}${cells}</tr>`;
         }).join('');
         tbodyEl.innerHTML = rows;
 
@@ -1177,15 +1250,39 @@
         });
       } catch (error) {
         console.error('renderTable error:', error);
-        tbodyEl.innerHTML = `<tr><td colspan="${tableColumns.length}" style="text-align:center;padding:24px;color:var(--danger);white-space:normal;">เกิดข้อผิดพลาดในการแสดงตาราง: ${escapeHtml(error.message)}</td></tr>`;
+        tbodyEl.innerHTML = `<tr><td colspan="${tableColumns.length + 1}" style="text-align:center;padding:24px;color:var(--danger);white-space:normal;">เกิดข้อผิดพลาดในการแสดงตาราง: ${escapeHtml(error.message)}</td></tr>`;
       }
     }
 
-    async function fetchFromUrl(url, room) {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`เกิดข้อผิดพลาดจาก API: ${url}`);
-      const data = await response.json();
-      const items = normalizeAssets(data);
+    async function fetchFromSheet(sheetId, room) {
+      const url = buildSheetApiUrl(sheetId);
+      let response;
+
+      try {
+        response = await fetch(url);
+      } catch (networkError) {
+        throw new Error(`เชื่อมต่อ Google Sheets API ไม่สำเร็จ (ห้อง: ${room}): ${networkError.message}`);
+      }
+
+      if (!response.ok) {
+        let reason = `HTTP ${response.status} ${response.statusText || ''}`.trim();
+        try {
+          const errorBody = await response.json();
+          if (errorBody?.error?.message) reason = errorBody.error.message;
+        } catch (parseErrorBodyFailure) {
+          // เนื้อหา error ไม่ใช่ JSON ก็ใช้ค่า reason เดิมไป
+        }
+        throw new Error(`ดึงข้อมูลห้อง "${room}" ไม่สำเร็จ (sheetId: ${sheetId}): ${reason}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error(`อ่านข้อมูล JSON จากห้อง "${room}" ไม่สำเร็จ: ${parseError.message}`);
+      }
+
+      const items = parseSheetValuesToObjects(data.values);
       return items.map((item) => ({ ...item, ห้อง: room }));
     }
 
@@ -1193,28 +1290,36 @@
       loadingEl.style.display = 'block';
       tableWrapEl.style.display = 'none';
       document.getElementById('chartsPanel').style.display = 'none';
+      apiErrorEl.style.display = 'none';
+      apiErrorEl.innerHTML = '';
 
        try {
          const results = await Promise.allSettled(
-           STEIN_STORAGE_ROOMS.map((entry) => fetchFromUrl(entry.url, entry.room))
+           ASSET_ROOMS.map((entry) => fetchFromSheet(entry.sheetId, entry.room))
          );
          const fulfilled = results.filter((result) => result.status === 'fulfilled');
          const items = fulfilled.flatMap((result) => result.value).filter((item) => !isEmptyAsset(item));
 
         const errorMessages = results
           .filter((result) => result.status === 'rejected')
-          .map((result) => result.reason?.message || result.reason)
-          .filter(Boolean);
+          .map((result) => result.reason?.message || String(result.reason));
 
         if (errorMessages.length) {
-          console.warn('API errors:', errorMessages);
+          console.warn('Google Sheets API errors:', errorMessages);
+          const introText = fulfilled.length
+            ? `โหลดข้อมูลไม่สำเร็จบางห้อง (${errorMessages.length}/${ASSET_ROOMS.length} ห้อง) ข้อมูลที่แสดงอาจไม่ครบถ้วน:`
+            : 'โหลดข้อมูลจาก Google Sheets ไม่สำเร็จทุกห้อง:';
+          apiErrorEl.innerHTML = `${escapeHtml(introText)}<ul style="margin:8px 0 0;padding-left:18px;">${errorMessages.map((msg) => `<li>${escapeHtml(msg)}</li>`).join('')}</ul>`;
+          apiErrorEl.style.display = 'block';
         }
 
          allAssets = items;
          updateDynamicFilters();
          applyFilters();
       } catch (error) {
-        console.warn('ไม่สามารถโหลดข้อมูลจาก Stein API ได้:', error);
+        console.warn('ไม่สามารถโหลดข้อมูลจาก Google Sheets API ได้:', error);
+        apiErrorEl.textContent = `เกิดข้อผิดพลาดที่ไม่คาดคิด: ${error.message}`;
+        apiErrorEl.style.display = 'block';
         renderSummary([]);
         renderCharts([]);
         renderTable([]);
