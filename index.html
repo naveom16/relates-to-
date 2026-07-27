@@ -54,7 +54,6 @@
       width: 128px;
       height: 128px;
       border-radius: 16px;
-      background: rgba(255, 255, 255, 0.15);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -496,11 +495,11 @@
       <div class="header-top">
         <div class="header-logo-wrap">
       
-          <img id="orgLogo" class="header-logo" src="logoimagess/logoAvm.png" alt="โลโก้หน่วยงาน">
+          <img id="orgLogo" class="header-logo" src="logoimagess/logoAvm.png" alt="โลโก้หน่วยงาน" />
         </div>
         <div class="header-text">
-          <h1>รายการแสดงข้อมูลครุภัณฑ์โสตทัศนูปกรณ์</h1>
-          <p>กลุ่มงานโสตทัศนูปกรณ์และพัฒนาสื่อมัลติมีเดียสำนักวิทยบริการและเทคโนโลยีสารสนเทศมหาวิทยาลัยราชภัฏนครราชสีมา</p>
+          <h1>ข้อมูลครุภัณฑ์โสตทัศนูปกรณ์</h1>
+          <p>กลุ่มงานโสตทัศนูปกรณ์และพัฒนาสื่อมัลติมีเดีย สำนักวิทยบริการและเทคโนโลยีสารสนเทศ มหาวิทยาลัยราชภัฏนครราชสีมา</p>
           <p></p>
           <div class="note"></div>
         </div>
@@ -670,7 +669,7 @@
       'วันที่อัพเดตล่าสุด'
     ];
 
-    const hiddenColumns = ['รูปภาพครุภัณฑ์'];
+    const hiddenColumns = ['รูปภาพครุภัณฑ์', 'IMAGEURL'];
 
     const loadingEl = document.getElementById('loading');
     const tableWrapEl = document.getElementById('tableWrap');
@@ -700,6 +699,16 @@
 
     function getValue(item, key) {
       return item[key] ?? '-';
+    }
+
+    function isEmptyValue(value) {
+      const text = String(value ?? '').trim();
+      return text === '' || text === '-';
+    }
+
+    function isEmptyAsset(item) {
+      if (isEmptyValue(getValue(item, 'Asset ID'))) return true;
+      return Object.entries(item).every(([key, value]) => key === 'ห้อง' || isEmptyValue(value));
     }
 
     function escapeHtml(value) {
@@ -1168,7 +1177,7 @@
            STEIN_STORAGE_ROOMS.map((entry) => fetchFromUrl(entry.url, entry.room))
          );
          const fulfilled = results.filter((result) => result.status === 'fulfilled');
-         const items = fulfilled.flatMap((result) => result.value);
+         const items = fulfilled.flatMap((result) => result.value).filter((item) => !isEmptyAsset(item));
 
         const errorMessages = results
           .filter((result) => result.status === 'rejected')
