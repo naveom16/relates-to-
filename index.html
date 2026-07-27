@@ -540,6 +540,7 @@
   </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   </head>
+<link rel="icon" type="image/png" href="logoimagess/logoAvm.png">
 <body>
   <div class="container">
     <div class="header">
@@ -1222,7 +1223,7 @@
         tbodyEl.innerHTML = '';
         const columns = getColumns(items);
         const totalCols = columns.length + 1;
-        tableHeaderEl.innerHTML = `<th style="width:${INDEX_COLUMN_WIDTH}">ลำดับ</th>` +
+        tableHeaderEl.innerHTML = `<th style="width:${INDEX_COLUMN_WIDTH}">No.</th>` +
           columns.map((key) => `<th style="width:${columnWidths[key] || 'auto'}">${escapeHtml(key)}</th>`).join('');
         if (!items.length) {
           tbodyEl.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center;padding:24px;color:#6b7280;white-space:normal;">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>`;
