@@ -140,28 +140,51 @@
       background: var(--surface);
       border-radius: 20px;
       box-shadow: var(--shadow);
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1100px;
+      table-layout: fixed;
+      min-width: 760px;
     }
 
     th, td {
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--border);
       text-align: left;
-      vertical-align: top;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 13.5px;
     }
 
     th {
       background: var(--surface-2);
-      font-size: 13px;
+      font-size: 12.5px;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    th:first-child, td:first-child {
+      position: sticky;
+      left: 0;
+      background: var(--surface);
+      z-index: 1;
+    }
+
+    th:first-child {
+      background: var(--surface-2);
+      z-index: 2;
+    }
+
+    tr:hover td:first-child {
+      background: #fbfdff;
     }
 
     tr:hover {
@@ -647,27 +670,28 @@
        },
 
      ];
-    const preferredColumns = [
-      'IMAGEURL',
+    // คอลัมน์ที่แสดงในตารางผลลัพธ์ (แบบย่อ ให้พอดีจอ) — ข้อมูลครบทุกฟิลด์ยังดูได้เต็มเมื่อกดดูรายละเอียด
+    const tableColumns = [
       'Asset ID',
       'รายการครุภัณฑ์',
-      'ยี่ห้อ',
-      'รุ่น',
-      'Serial No.',
       'ประเภทครุภัณฑ์',
-      'รหัสครุภัณฑ์',
-      'หมายเลขครุภัณฑ์',
-      'สถานะการรับประกัน',
-      'ปีที่จัดซื้อ',
-      'จำนวน',
-      'หน่วยนับ',
-      'ราคา',
-      'ประเภทงบประมาณ',
       'สถานะการใช้งาน',
       'สถานที่ติดตั้งจัดเก็บ',
-      'หมายเหตุอาการเสีย',
-      'วันที่อัพเดตล่าสุด'
+      'ห้อง',
+      'ปีที่จัดซื้อ',
+      'ราคา'
     ];
+
+    const columnWidths = {
+      'Asset ID': '110px',
+      'รายการครุภัณฑ์': '22%',
+      'ประเภทครุภัณฑ์': '15%',
+      'สถานะการใช้งาน': '135px',
+      'สถานที่ติดตั้งจัดเก็บ': '16%',
+      'ห้อง': '13%',
+      'ปีที่จัดซื้อ': '85px',
+      'ราคา': '95px'
+    };
 
     const hiddenColumns = ['รูปภาพครุภัณฑ์', 'IMAGEURL'];
 
@@ -734,10 +758,8 @@
     }
 
     function getColumns(items) {
-      const allKeys = items.flatMap((item) => Object.keys(item || {}));
-      const uniqueKeys = [...new Set(allKeys)];
-      const columns = [...new Set([...preferredColumns.filter((key) => uniqueKeys.includes(key)), ...uniqueKeys.filter((key) => !preferredColumns.includes(key))])];
-      return columns.filter((key) => !hiddenColumns.includes(key));
+      const allKeys = new Set(items.flatMap((item) => Object.keys(item || {})));
+      return tableColumns.filter((key) => allKeys.has(key) && !hiddenColumns.includes(key));
     }
 
     function getStatusClass(status) {
@@ -1129,14 +1151,14 @@
       try {
         tbodyEl.innerHTML = '';
         const columns = getColumns(items);
-        tableHeaderEl.innerHTML = columns.map((key) => `<th>${escapeHtml(key)}</th>`).join('');
+        tableHeaderEl.innerHTML = columns.map((key) => `<th style="width:${columnWidths[key] || 'auto'}">${escapeHtml(key)}</th>`).join('');
         if (!items.length) {
-          tbodyEl.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#6b7280;">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>';
+          tbodyEl.innerHTML = `<tr><td colspan="${columns.length || tableColumns.length}" style="text-align:center;padding:24px;color:#6b7280;white-space:normal;">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>`;
           return;
         }
 
         const rows = items.map((item) => {
-          const cells = columns.map((key) => `<td>${createCellContent(item, key)}</td>`).join('');
+          const cells = columns.map((key) => `<td title="${escapeHtml(String(getValue(item, key)))}">${createCellContent(item, key)}</td>`).join('');
           const itemJson = JSON.stringify(item).replace(/'/g, '&apos;');
           return `<tr class="row-clickable" data-item='${itemJson}'>${cells}</tr>`;
         }).join('');
@@ -1155,7 +1177,7 @@
         });
       } catch (error) {
         console.error('renderTable error:', error);
-        tbodyEl.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--danger);">เกิดข้อผิดพลาดในการแสดงตาราง: ' + error.message + '</td></tr>';
+        tbodyEl.innerHTML = `<tr><td colspan="${tableColumns.length}" style="text-align:center;padding:24px;color:var(--danger);white-space:normal;">เกิดข้อผิดพลาดในการแสดงตาราง: ${escapeHtml(error.message)}</td></tr>`;
       }
     }
 
