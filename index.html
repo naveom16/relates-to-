@@ -114,8 +114,8 @@
     }
 
     .stat-card.disposed {
-      background: #f5f3ff;
-      border-left-color: #7c3aed;
+      background: #fdffed;
+      border-left-color: #a1c84e;
     }
 
     .stat-card.no-status {
@@ -147,7 +147,7 @@
     }
 
     .stat-card.disposed .stat-value {
-      color: #7c3aed;
+      color: #c4da7a;
     }
 
     .stat-card.no-status .stat-value {
@@ -1262,7 +1262,7 @@
       try {
         response = await fetch(url);
       } catch (networkError) {
-        throw new Error(`เชื่อมต่อ Google Sheets API ไม่สำเร็จ (ห้อง: ${room}): ${networkError.message}`);
+        throw new Error(`เชื่อมต่อ Google Sheets API fail (ห้อง: ${room}): ${networkError.message}`);
       }
 
       if (!response.ok) {
@@ -1273,14 +1273,14 @@
         } catch (parseErrorBodyFailure) {
           // เนื้อหา error ไม่ใช่ JSON ก็ใช้ค่า reason เดิมไป
         }
-        throw new Error(`ดึงข้อมูลห้อง "${room}" ไม่สำเร็จ (sheetId: ${sheetId}): ${reason}`);
+        throw new Error(`ดึงข้อมูลห้อง "${room}" fail (sheetId: ${sheetId}): ${reason}`);
       }
 
       let data;
       try {
         data = await response.json();
       } catch (parseError) {
-        throw new Error(`อ่านข้อมูล JSON จากห้อง "${room}" ไม่สำเร็จ: ${parseError.message}`);
+        throw new Error(`อ่านข้อมูล JSON จากห้อง "${room}" fail: ${parseError.message}`);
       }
 
       const items = parseSheetValuesToObjects(data.values);
