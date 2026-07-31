@@ -114,8 +114,8 @@
     }
 
     .stat-card.disposed {
-      background: #fdffed;
-      border-left-color: #a1c84e;
+      background: #f5f3ff;
+      border-left-color: #7c3aed;
     }
 
     .stat-card.no-status {
@@ -147,7 +147,7 @@
     }
 
     .stat-card.disposed .stat-value {
-      color: #c4da7a;
+      color: #7c3aed;
     }
 
     .stat-card.no-status .stat-value {
@@ -160,6 +160,70 @@
       box-shadow: var(--shadow);
       overflow-x: auto;
       overflow-y: hidden;
+    }
+
+    .pagination-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--surface);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 14px 20px;
+      margin-top: 16px;
+    }
+
+    .pagination-info {
+      font-size: 13.5px;
+      color: var(--muted);
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .page-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13.5px;
+      font-weight: 600;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .page-btn:hover:not(:disabled):not(.active) {
+      background: var(--surface-2);
+      border-color: #cbd5e1;
+    }
+
+    .page-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      cursor: default;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .page-ellipsis {
+      min-width: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13.5px;
+      user-select: none;
     }
 
     table {
@@ -450,6 +514,7 @@
       .header { padding: 18px; }
       .table-wrap { overflow-x: auto; }
       .charts-panel { grid-template-columns: 1fr; }
+      .pagination-wrap { justify-content: center; text-align: center; }
     }
 
     .charts-panel {
@@ -540,7 +605,6 @@
   </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   </head>
-<link rel="icon" type="image/png" href="logoimagess/logoAvm.png">
 <body>
   <div class="container">
     <div class="header">
@@ -630,6 +694,10 @@
         </thead>
         <tbody id="assetTableBody"></tbody>
       </table>
+    </div>
+    <div class="pagination-wrap" id="paginationWrap" style="display:none;">
+      <div class="pagination-info" id="paginationInfo"></div>
+      <div class="pagination-controls" id="paginationControls"></div>
     </div>
   </div>
 
@@ -754,6 +822,12 @@
     const disposedCountEl = document.getElementById('disposedCount');
     const noStatusCountEl = document.getElementById('noStatusCount');
     const tableHeaderEl = document.querySelector('#assetTable thead tr');
+    const paginationWrapEl = document.getElementById('paginationWrap');
+    const paginationInfoEl = document.getElementById('paginationInfo');
+    const paginationControlsEl = document.getElementById('paginationControls');
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+    let currentFilteredItems = [];
     const searchInputEl = document.getElementById('searchInput');
     const filterControlsEl = document.getElementById('filterControls');
     const clearFiltersBtn = document.getElementById('clearFiltersBtn');
@@ -948,10 +1022,12 @@
      }
     
 
-     function applyFilters() {
+     function applyFilters(resetPage = true) {
       const keyword = searchInputEl.value.trim();
       const filtered = filterAssets(allAssets, keyword, activeFilters);
-      
+      currentFilteredItems = filtered;
+      if (resetPage) currentPage = 1;
+
       renderSummary(filtered);
       
       try {
@@ -1223,15 +1299,26 @@
         tbodyEl.innerHTML = '';
         const columns = getColumns(items);
         const totalCols = columns.length + 1;
-        tableHeaderEl.innerHTML = `<th style="width:${INDEX_COLUMN_WIDTH}">No.</th>` +
+        tableHeaderEl.innerHTML = `<th style="width:${INDEX_COLUMN_WIDTH}">ลำดับ</th>` +
           columns.map((key) => `<th style="width:${columnWidths[key] || 'auto'}">${escapeHtml(key)}</th>`).join('');
-        if (!items.length) {
+
+        const total = items.length;
+        if (!total) {
           tbodyEl.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center;padding:24px;color:#6b7280;white-space:normal;">ไม่พบข้อมูลที่ตรงกับคำค้นหา</td></tr>`;
+          renderPagination(0, 0, 0);
           return;
         }
 
-        const rows = items.map((item, index) => {
-          const indexCell = `<td>${index + 1}</td>`;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const endIndex = Math.min(startIndex + PAGE_SIZE, total);
+        const pageItems = items.slice(startIndex, endIndex);
+
+        const rows = pageItems.map((item, index) => {
+          const indexCell = `<td>${startIndex + index + 1}</td>`;
           const cells = columns.map((key) => `<td title="${escapeHtml(String(getValue(item, key)))}">${createCellContent(item, key)}</td>`).join('');
           const itemJson = JSON.stringify(item).replace(/'/g, '&apos;');
           return `<tr class="row-clickable" data-item='${itemJson}'>${indexCell}${cells}</tr>`;
@@ -1249,10 +1336,83 @@
             }
           });
         });
+
+        renderPagination(total, startIndex, endIndex);
       } catch (error) {
         console.error('renderTable error:', error);
         tbodyEl.innerHTML = `<tr><td colspan="${tableColumns.length + 1}" style="text-align:center;padding:24px;color:var(--danger);white-space:normal;">เกิดข้อผิดพลาดในการแสดงตาราง: ${escapeHtml(error.message)}</td></tr>`;
+        paginationWrapEl.style.display = 'none';
       }
+    }
+
+    // สร้างรายการเลขหน้าแบบมี ... คั่น เช่น 1 2 3 ... 16 เพื่อไม่ให้ปุ่มเยอะเกินไปเมื่อมีหลายหน้า
+    function getPaginationRange(current, total) {
+      const delta = 1;
+      const range = [];
+      for (let i = 1; i <= total; i++) {
+        if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
+          range.push(i);
+        }
+      }
+      const withDots = [];
+      let last = null;
+      range.forEach((i) => {
+        if (last !== null) {
+          if (i - last === 2) {
+            withDots.push(last + 1);
+          } else if (i - last > 2) {
+            withDots.push('...');
+          }
+        }
+        withDots.push(i);
+        last = i;
+      });
+      return withDots;
+    }
+
+    function renderPagination(total, startIndex, endIndex) {
+      if (!total) {
+        paginationWrapEl.style.display = 'none';
+        return;
+      }
+
+      paginationWrapEl.style.display = 'flex';
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+      paginationInfoEl.textContent = `แสดง ${startIndex + 1}-${endIndex} จาก ${total.toLocaleString('th-TH')} รายการ`;
+
+      const pages = getPaginationRange(currentPage, totalPages);
+      const controlsHtml = [];
+
+      controlsHtml.push(`<button type="button" class="page-btn" id="prevPageBtn" ${currentPage <= 1 ? 'disabled' : ''}>◀ ก่อนหน้า</button>`);
+      pages.forEach((p) => {
+        if (p === '...') {
+          controlsHtml.push('<span class="page-ellipsis">...</span>');
+        } else {
+          controlsHtml.push(`<button type="button" class="page-btn${p === currentPage ? ' active' : ''}" data-page="${p}">${p}</button>`);
+        }
+      });
+      controlsHtml.push(`<button type="button" class="page-btn" id="nextPageBtn" ${currentPage >= totalPages ? 'disabled' : ''}>ถัดไป ▶</button>`);
+
+      paginationControlsEl.innerHTML = controlsHtml.join('');
+
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+      if (prevBtn) prevBtn.addEventListener('click', () => goToPage(currentPage - 1));
+      if (nextBtn) nextBtn.addEventListener('click', () => goToPage(currentPage + 1));
+
+      paginationControlsEl.querySelectorAll('.page-btn[data-page]').forEach((btn) => {
+        btn.addEventListener('click', () => goToPage(Number(btn.getAttribute('data-page'))));
+      });
+    }
+
+    function goToPage(page) {
+      const totalPages = Math.max(1, Math.ceil(currentFilteredItems.length / PAGE_SIZE));
+      const clamped = Math.min(Math.max(1, page), totalPages);
+      if (clamped === currentPage) return;
+      currentPage = clamped;
+      renderTable(currentFilteredItems);
+      tableWrapEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     async function fetchFromSheet(sheetId, room) {
@@ -1262,7 +1422,7 @@
       try {
         response = await fetch(url);
       } catch (networkError) {
-        throw new Error(`เชื่อมต่อ Google Sheets API fail (ห้อง: ${room}): ${networkError.message}`);
+        throw new Error(`เชื่อมต่อ Google Sheets API ไม่สำเร็จ (ห้อง: ${room}): ${networkError.message}`);
       }
 
       if (!response.ok) {
@@ -1273,14 +1433,14 @@
         } catch (parseErrorBodyFailure) {
           // เนื้อหา error ไม่ใช่ JSON ก็ใช้ค่า reason เดิมไป
         }
-        throw new Error(`ดึงข้อมูลห้อง "${room}" fail (sheetId: ${sheetId}): ${reason}`);
+        throw new Error(`ดึงข้อมูลห้อง "${room}" ไม่สำเร็จ (sheetId: ${sheetId}): ${reason}`);
       }
 
       let data;
       try {
         data = await response.json();
       } catch (parseError) {
-        throw new Error(`อ่านข้อมูล JSON จากห้อง "${room}" fail: ${parseError.message}`);
+        throw new Error(`อ่านข้อมูล JSON จากห้อง "${room}" ไม่สำเร็จ: ${parseError.message}`);
       }
 
       const items = parseSheetValuesToObjects(data.values);
@@ -1316,7 +1476,7 @@
 
          allAssets = items;
          updateDynamicFilters();
-         applyFilters();
+         applyFilters(false);
       } catch (error) {
         console.warn('ไม่สามารถโหลดข้อมูลจาก Google Sheets API ได้:', error);
         apiErrorEl.textContent = `เกิดข้อผิดพลาดที่ไม่คาดคิด: ${error.message}`;
