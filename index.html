@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="logoimagess/logoAvm.png" />
   <title>ระบบแสดงข้อมูลครุภัณฑ์</title>
   <style>
     :root {
@@ -771,10 +772,10 @@
       .export-toolbar { justify-content: center; }
     }
   </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@latest/dist/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@latest/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.1/dist/jspdf.plugin.autotable.min.js"></script>
   </head>
 <body>
   <div class="container">
@@ -867,21 +868,21 @@
         <div class="export-menu" id="exportMenu">
           <div class="export-menu-section-title">ผลลัพธ์ปัจจุบัน</div>
           <button type="button" class="export-menu-item" id="exportExcelFiltered">
-            <span class="export-menu-item-label">📊 Export Excel</span>
+            <span class="export-menu-item-label"> Export Excel</span>
             <span class="export-count" id="excelFilteredCount">(0 รายการ)</span>
           </button>
           <button type="button" class="export-menu-item" id="exportPdfFiltered">
-            <span class="export-menu-item-label">📄 Export PDF</span>
+            <span class="export-menu-item-label"> Export PDF</span>
             <span class="export-count" id="pdfFilteredCount">(0 รายการ)</span>
           </button>
            <div class="export-menu-divider"></div>
            <div class="export-menu-section-title">ทั้งหมด</div>
            <button type="button" class="export-menu-item" id="exportExcelAll">
-             <span class="export-menu-item-label">📊 Export Excel</span>
+             <span class="export-menu-item-label"> Export Excel</span>
              <span class="export-count" id="excelAllCount">(0 รายการ)</span>
            </button>
            <button type="button" class="export-menu-item" id="exportPdfAll">
-             <span class="export-menu-item-label">📄 Export PDF</span>
+             <span class="export-menu-item-label"> Export PDF</span>
              <span class="export-count" id="pdfAllCount">(0 รายการ)</span>
            </button>
         </div>
@@ -1810,24 +1811,26 @@
     let exportLoadingToastEl = null;
 
     function showExportLoading(show, message) {
-      if (show) {
-        if (!exportLoadingToastEl) {
-          exportLoadingToastEl = document.createElement('div');
-          exportLoadingToastEl.className = 'toast loading';
-          toastContainerEl.appendChild(exportLoadingToastEl);
-        }
-        exportLoadingToastEl.innerHTML = `<span class="toast-spinner"></span><span>${escapeHtml(message || 'กำลังสร้างไฟล์...')}</span>`;
-      } else if (exportLoadingToastEl) {
-        exportLoadingToastEl.remove();
-        exportLoadingToastEl = null;
-      }
-    }
+       if (!toastContainerEl) return;
+       if (show) {
+         if (!exportLoadingToastEl) {
+           exportLoadingToastEl = document.createElement('div');
+           exportLoadingToastEl.className = 'toast loading';
+           toastContainerEl.appendChild(exportLoadingToastEl);
+         }
+         exportLoadingToastEl.innerHTML = `<span class="toast-spinner"></span><span>${escapeHtml(message || 'กำลังสร้างไฟล์...')}</span>`;
+       } else if (exportLoadingToastEl) {
+         exportLoadingToastEl.remove();
+         exportLoadingToastEl = null;
+       }
+     }
 
-    function showExportToast(message, type, duration) {
-      const toast = document.createElement('div');
-      toast.className = `toast ${type || 'success'}`;
-      toast.textContent = message;
-      toastContainerEl.appendChild(toast);
+     function showExportToast(message, type, duration) {
+       if (!toastContainerEl) return;
+       const toast = document.createElement('div');
+       toast.className = `toast ${type || 'success'}`;
+       toast.textContent = message;
+       toastContainerEl.appendChild(toast);
       setTimeout(() => {
         toast.style.transition = 'opacity 0.25s ease';
         toast.style.opacity = '0';
@@ -2069,12 +2072,12 @@
     }
 
      // --- PDF Export ---
-    async function exportToPdf(data, filename = 'assets_export.pdf') {
+    async function exportToPdf(data, filename = 'ไฟล์ครุภัณฑ์.pdf') {
       if (!window.jspdf || !window.jspdf.jsPDF) {
         showExportToast('ไม่พบไลบรารี PDF', 'error');
         return;
       }
-      showExportToast('กำลังสร้าง PDF (ไทย)...');
+      showExportToast('กำลังสร้าง PDF ');
 
       try {
         const { jsPDF } = window.jspdf;
