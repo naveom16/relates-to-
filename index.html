@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="th">
-<img id="orgLogo" class="header-logo" src="logoimagess/logoAvm-new.png" alt="โลโก้หน่วยงาน" />
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
   <title>ระบบแสดงข้อมูลครุภัณฑ์</title>
   <style>
     :root {
@@ -868,21 +868,21 @@
         <div class="export-menu" id="exportMenu">
           <div class="export-menu-section-title">ผลลัพธ์ปัจจุบัน</div>
           <button type="button" class="export-menu-item" id="exportExcelFiltered">
-            <span class="export-menu-item-label"> Export Excel</span>
+            <span class="export-menu-item-label">📊 Export Excel</span>
             <span class="export-count" id="excelFilteredCount">(0 รายการ)</span>
           </button>
           <button type="button" class="export-menu-item" id="exportPdfFiltered">
-            <span class="export-menu-item-label"> Export PDF</span>
+            <span class="export-menu-item-label">📄 Export PDF</span>
             <span class="export-count" id="pdfFilteredCount">(0 รายการ)</span>
           </button>
            <div class="export-menu-divider"></div>
            <div class="export-menu-section-title">ทั้งหมด</div>
            <button type="button" class="export-menu-item" id="exportExcelAll">
-             <span class="export-menu-item-label"> Export Excel</span>
+             <span class="export-menu-item-label">📊 Export Excel</span>
              <span class="export-count" id="excelAllCount">(0 รายการ)</span>
            </button>
            <button type="button" class="export-menu-item" id="exportPdfAll">
-             <span class="export-menu-item-label"> Export PDF</span>
+             <span class="export-menu-item-label">📄 Export PDF</span>
              <span class="export-count" id="pdfAllCount">(0 รายการ)</span>
            </button>
         </div>
@@ -945,7 +945,7 @@
         key: 'ประเภทครุภัณฑ์',
         label: 'ประเภทครุภัณฑ์',
         options: [
-          'วัสดุ/ครุภัณฑ์ต่ำกว่าเกณฑ์ โฆษณาและเผยแพร่',
+          'สดุ/ครุภัณฑ์ต่ำกว่าเกณฑ์ โฆษณาและเผยแพร่',
           'ครุภัณฑ์ไฟฟ้าและวิทยุ',
           'ครุภัณฑ์โฆษณาและเผยแพร่',
           'ครุภัณฑ์สำนักงาน'
@@ -2072,12 +2072,12 @@
     }
 
      // --- PDF Export ---
-    async function exportToPdf(data, filename = 'ไฟล์ครุภัณฑ์.pdf') {
+    async function exportToPdf(data, filename = 'assets_export.pdf') {
       if (!window.jspdf || !window.jspdf.jsPDF) {
         showExportToast('ไม่พบไลบรารี PDF', 'error');
         return;
       }
-      showExportToast('กำลังสร้าง PDF ');
+      showExportToast('กำลังสร้าง PDF (ไทย)...');
 
       try {
         const { jsPDF } = window.jspdf;
