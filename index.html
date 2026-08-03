@@ -863,26 +863,26 @@
       <div class="export-toolbar-label">ดาวน์โหลดผลลัพธ์</div>
       <div class="export-dropdown" id="exportDropdown">
         <button type="button" class="export-trigger-btn" id="exportTriggerBtn">
-          <span>Export</span><span class="export-caret">▾</span>
+          <span>ดาวโหลด</span><span class="export-caret">▾</span>
         </button>
         <div class="export-menu" id="exportMenu">
           <div class="export-menu-section-title">ผลลัพธ์ปัจจุบัน</div>
           <button type="button" class="export-menu-item" id="exportExcelFiltered">
-            <span class="export-menu-item-label"> Export Excel</span>
+            <span class="export-menu-item-label"> ดาวโหลดไฟล์ Excel</span>
             <span class="export-count" id="excelFilteredCount">(0 รายการ)</span>
           </button>
           <button type="button" class="export-menu-item" id="exportPdfFiltered">
-            <span class="export-menu-item-label"> Export PDF</span>
+            <span class="export-menu-item-label"> ดาวโหลดไฟล์ PDF</span>
             <span class="export-count" id="pdfFilteredCount">(0 รายการ)</span>
           </button>
            <div class="export-menu-divider"></div>
            <div class="export-menu-section-title">ทั้งหมด</div>
            <button type="button" class="export-menu-item" id="exportExcelAll">
-             <span class="export-menu-item-label"> Export Excel</span>
+             <span class="export-menu-item-label"> ดาวโหลดไฟล์ Excel</span>
              <span class="export-count" id="excelAllCount">(0 รายการ)</span>
            </button>
            <button type="button" class="export-menu-item" id="exportPdfAll">
-             <span class="export-menu-item-label"> Export PDF</span>
+             <span class="export-menu-item-label"> ดาวโหลดไฟล์ PDF</span>
              <span class="export-count" id="pdfAllCount">(0 รายการ)</span>
            </button>
         </div>
@@ -919,7 +919,7 @@
     const GOOGLE_SHEETS_API_KEY = 'AIzaSyBk2zW8RhQxH9WBpTEqpxMnHJSwT5YFQ6k';
     const SHEET_TAB_NAME = 'ครุภัณฑ์';
 
-    // อาร์เรย์ห้อง/สถานที่ พร้อม sheetId ของแต่ละห้อง (แทนที่ URL ของ SteinHQ เดิม)
+    // อาร์เรย์ห้อง/สถานที่ พร้อม sheetId ของแต่ละห้อง (แทนที่ URL ของ SteinHQ เดิม)pdf
     const ASSET_ROOMS = [
       { sheetId: '12wC2hFIgyFiVpfyWwNamg7D9hyX3QV8dTALeycxcwQw', room: 'โรงยิม' },
       { sheetId: '1V4Cqf5XDm9D1Eb10D4Zp0FUVliRBEbpNzRjI9i49qgI', room: 'ห้องประชุมสระบัว' },
@@ -2154,7 +2154,7 @@
         });
 
         doc.save(filename);
-        showExportToast('ดาวน์โหลด PDF (ภาษาไทย) สำเร็จ');
+        showExportToast('ดาวน์โหลด PDF สำเร็จ');
       } catch (error) {
         console.error("PDF Export Error:", error);
         showExportToast('เกิดข้อผิดพลาดในการสร้าง PDF: ' + error.message, 'error');
