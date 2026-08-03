@@ -1882,7 +1882,7 @@
     }
 
     // ----- Excel Export (SheetJS) -----
-    function exportToExcel(data, filename = 'assets_export.xlsx') {
+    function exportToExcel(data, filename = 'ไฟล์ครุภัณฑ์.xlsx') {
       showExportToast('กำลังสร้างไฟล์ Excel...');
       setTimeout(() => {
         const formattedData = formatExportData(data);
@@ -2072,12 +2072,12 @@
     }
 
      // --- PDF Export ---
-    async function exportToPdf(data, filename = 'assets_export.pdf') {
+    async function exportToPdf(data, filename = 'ไฟล์ครุภัณฑ์.pdf') {
       if (!window.jspdf || !window.jspdf.jsPDF) {
         showExportToast('ไม่พบไลบรารี PDF', 'error');
         return;
       }
-      showExportToast('กำลังสร้าง PDF (ไทย)...');
+      showExportToast('กำลังสร้าง PDF...');
 
       try {
         const { jsPDF } = window.jspdf;
